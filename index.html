@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NexReach – Client Notes mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "DM Sans", sans-serif; color: #242423; background: #fff; height: 100vh; display: flex; flex-direction: column; }
+  .topbar { background: #0b3a53; color: #fff; padding: 8px 20px; font-size: 12px; text-align: right; }
+  .header { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 24px; font-weight: 500; margin: 0; }
+  .btn { font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  .btn.outline { background: #fff; border: 1px solid #bdbbb5; color: #242423; }
+  .btn.solid { background: #006ccf; border: 1px solid #006ccf; color: #fff; }
+  .main { display: flex; flex: 1; overflow: hidden; position: relative; }
+  .sidebar { width: 233px; min-width: 233px; padding: 20px; overflow-y: auto; }
+  .sitecard { background: #f7f6f4; border-radius: 12px; padding: 20px 16px; }
+  .sitecard .title { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 16px; font-weight: 500; }
+  .sitecard .title a { font-size: 12px; color: #006ccf; cursor: pointer; }
+  .field { margin-bottom: 14px; font-size: 13px; }
+  .field .l { color: #4f4e4c; }
+  .field .v { line-height: 1.4; white-space: pre-line; }
+  .notecard { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: #fff; border: 1px solid #e7e5df; cursor: pointer; transition: all .15s; }
+  .notecard:first-of-type { margin-top: 16px; }
+  .notecard:hover, .notecard.active { background: #eaf5ff; border-color: #006ccf; }
+  .notecard .left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+  .notecard svg { width: 14px; height: 14px; }
+  .badge { background: #006ccf; color: #fff; font-size: 11px; font-weight: 600; min-width: 20px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .content { flex: 1; padding: 24px; overflow: auto; }
+  .content h2 { font-size: 18px; margin: 0 0 16px; }
+  .placeholder { border: 1px dashed #d4d2cc; border-radius: 8px; padding: 40px; color: #8a8985; font-size: 13px; text-align: center; }
+
+  /* Side panel (same spec as Agent Notes panel) */
+  .panel { position: absolute; top: 0; bottom: 0; width: 360px; background: #fff; z-index: 10; display: none; flex-direction: column; }
+  .panel.open { display: flex; }
+  .panel.right { right: 0; border-left: 1px solid #e7e5df; box-shadow: -4px 0 20px rgba(0,0,0,.12); }
+  .panel.left { left: 0; border-right: 1px solid #e7e5df; box-shadow: 4px 0 20px rgba(0,0,0,.12); }
+  .panel .head { padding: 16px 20px 12px; border-bottom: 1px solid #e7e5df; }
+  .panel .head .row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .panel .head .t { font-weight: 700; font-size: 16px; }
+  .panel .head .sub { font-size: 12px; color: #6b7280; margin-top: 8px; line-height: 1.5; }
+  .iconbtn { width: 28px; height: 28px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #6b7280; }
+  .iconbtn:hover { background: #f3f2ef; }
+  .panel .compose { padding: 12px 20px; border-bottom: 1px solid #e7e5df; }
+  .panel textarea { width: 100%; font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid #bdbbb5; border-radius: 6px; resize: vertical; }
+  .panel .compose .actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+  .panel .list { flex: 1; overflow-y: auto; padding: 0 20px; }
+  .note { padding: 16px 0; border-bottom: 1px solid #e5e7eb; }
+  .note:last-child { border-bottom: none; }
+  .note .meta { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+  .note .meta b { color: #242423; font-weight: 600; }
+  .note .text { font-size: 13px; color: #374151; line-height: 1.6; }
+  .note .text .hl { font-weight: 600; color: #242423; }
+
+  .note .byline { font-size: 12px; font-style: italic; color: #6b7280; margin-bottom: 6px; }
+  .content h3 { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+  .row { display: flex; align-items: center; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .pill.green { background: #dcfce7; color: #166534; } .pill.red { background: #fee2e2; color: #991b1b; }
+  .link { color: #006ccf; font-size: 13px; cursor: pointer; }
+  .btn.xs { padding: 4px 12px; font-size: 12px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.outline.prom { border-color: #006ccf; color: #006ccf; }
+  select, .search { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid #bdbbb5; border-radius: 6px; background: #fff; }
+  hr { border: 0; border-top: 1px solid #e7e5df; margin: 24px 0; }
+  .muted { color: #6e6d6a; font-size: 13px; }
+  .tabs { display: inline-flex; background: #f7f6f4; border-radius: 20px; padding: 3px; margin-bottom: 20px; }
+  .tabs button { font: inherit; font-size: 13px; border: 0; background: transparent; padding: 6px 16px; border-radius: 16px; cursor: pointer; color: #4f4e4c; }
+  .tabs button.on { background: #006ccf; color: #fff; }
+  .summary { border: 1px solid #e7e5df; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+  .summary .top { font-size: 13px; margin-bottom: 14px; } .summary .top .n { font-size: 20px; font-weight: 700; margin-right: 6px; }
+  .summary .cols { display: flex; gap: 0; flex-wrap: wrap; }
+  .summary .col { padding: 0 24px; border-left: 1px solid #e7e5df; } .summary .col:first-child { padding-left: 0; border-left: 0; }
+  .summary .col .h { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+  .summary .nums { display: flex; gap: 20px; } .summary .nums .l { font-size: 12px; color: #4f4e4c; } .summary .nums .v { font-size: 16px; font-weight: 700; }
+  .summary .last { margin-top: 14px; font-size: 12px; color: #6e6d6a; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 16px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { position: relative; }
+  .chip > span { display: inline-flex; gap: 4px; align-items: center; padding: 7px 12px; border: 1px solid #8a8985; border-radius: 999px; font-size: 14px; font-weight: 500; color: #4f4e4c; cursor: pointer; user-select: none; white-space: nowrap; }
+  .chip.sel > span { border-color: #006ccf; color: #006ccf; background: #eaf5ff; }
+  .chip .menu { display: none; position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 5; background: #fff; border: 1px solid #e7e5df; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.1); padding: 6px 0; min-width: 180px; }
+  .chip.open .menu { display: block; }
+  .chip .menu label { display: flex; gap: 10px; padding: 8px 14px; font-size: 14px; cursor: pointer; } .chip .menu label:hover { background: #f7f6f4; }
+  .search { width: 340px; }
+  .selbar { display: none; justify-content: space-between; align-items: center; background: #eaf5ff; border: 1px solid #b9dcfb; border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; font-size: 13px; font-weight: 500; }
+  .selbar.show { display: flex; } .selbar .grp { display: flex; gap: 10px; align-items: center; }
+  .tablewrap { border: 1px solid #e7e5df; border-radius: 8px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; font-weight: 500; background: #f7f6f4; padding: 10px 8px; white-space: nowrap; border-bottom: 1px solid #e7e5df; }
+  td { padding: 10px 8px; border-bottom: 1px solid #f0eee9; vertical-align: top; }
+  tbody tr:hover { background: #faf9f7; }
+  .st { font-weight: 500; } .st.done { color: #1f7c53; }
+  .undo { cursor: pointer; color: #8a8985; font-size: 16px; }
+  .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 13px; color: #6e6d6a; }
+  .pager .grp { display: flex; gap: 8px; align-items: center; }
+  .pager button { border: 1px solid #bdbbb5; background: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #242423; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; display: none; z-index: 50; }
+</style>
+</head>
+<body>
+<div class="topbar">user@useremail.com · Tenant</div>
+<div class="header">
+  <h1>NexReach</h1>
+  <div style="display:flex;gap:12px">
+    <button class="btn outline">Back to Search</button>
+    <button class="btn solid">Finish Outreach</button>
+  </div>
+</div>
+
+<div class="main" id="main">
+  <div class="sidebar">
+    <div class="sitecard">
+      <div class="title"><span>Site Details</span><a>Edit</a></div>
+      <div class="field"><div class="l">Site Name</div><div class="v">Manhattan Internal Medicine</div></div>
+      <div class="field"><div class="l">Primary Address</div><div class="v">123 Main St., #330,
+New York, NY 12345</div></div>
+      <div class="field"><div class="l">Phone Number</div><div class="v">718-555-1234</div></div>
+      <div class="field"><div class="l">Fax Number</div><div class="v">718-555-5678</div></div>
+      <div class="field"><div class="l">Primary Contact</div><div class="v">Mason Reed</div></div>
+      <div class="field"><div class="l">Primary Contact Email</div><div class="v">mason@manhattanim.com</div></div>
+      <div class="field"><div class="l">Preferred Retrieval Method</div><div class="v">Offsite</div></div>
+
+      <!-- Existing card -->
+      <div class="notecard" data-panel="agent">
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#006ccf" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Agent Notes
+        </div>
+        <span class="badge" id="agentCount">5</span>
+      </div>
+
+      <!-- NEW card -->
+      <div class="notecard" data-panel="client">
+        <div class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#006ccf" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          Client Notes
+        </div>
+        <span class="badge" id="clientCount">4</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="row" style="justify-content:space-between;margin-bottom:16px">
+      <h2 style="margin:0">Call Actions</h2>
+      <div class="row" style="border:1px solid #e7e5df;border-radius:8px;padding:8px 14px;gap:8px;font-size:13px;display:none">PP Status</div>
+    </div>
+    <div class="row" style="gap:24px;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <h3>Office Contact Result</h3>
+        <div id="contactInitial" class="row" style="gap:10px">
+          <button class="btn solid xs" id="btnConn">Connected</button>
+          <button class="btn outline xs" id="btnNoConn">Did Not Connect</button>
+        </div>
+        <div id="contactConn" class="row" style="gap:10px;display:none"><span class="pill green">Connected</span><span class="link" data-reset>↺ Change Answer</span></div>
+        <div id="contactNo" class="row" style="gap:10px;display:none"><span class="pill red">Not Connected</span><span class="link" data-reset>↺ Change Answer</span></div>
+      </div>
+      <div id="reasonBlock" class="row" style="gap:24px;display:none">
+        <div style="width:1px;align-self:stretch;background:#e7e5df"></div>
+        <div>
+          <h3>Reason for No Contact</h3>
+          <div class="row" style="gap:8px">
+            <select id="reason"><option value="">Select</option><option>No Answer (No Voicemail)</option><option>No Answer (Left Voicemail)</option><option>Not a Practitioner Office</option><option>Site Permanently Closed</option></select>
+            <button class="btn solid xs" id="reasonSubmit" disabled>Submit</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-left:auto"><div class="muted" style="font-size:12px">Reference ID</div><b style="font-size:14px">NR-718-555-12345</b></div>
+    </div>
+
+    <hr />
+    <h2>Record Request Actions</h2>
+    <div class="tabs"><button class="on" data-tab="workspace">Workspace</button><button data-tab="history">Call History</button></div>
+
+    <div id="tab-workspace">
+      <div class="summary">
+        <div class="top"><span class="n">1,247</span><b>Record Requests</b> · 249 providers · Multiple health plans (3)</div>
+        <div class="cols">
+          <div class="col"><div class="h">⚠ Needs Action</div><div class="nums">
+            <div><div class="l">Past Due</div><div class="v" id="sPast">3</div></div>
+            <div><div class="l">Unscheduled</div><div class="v" id="sNew">0</div></div>
+            <div><div class="l">In Progress-Unblocked</div><div class="v">0</div></div></div></div>
+          <div class="col"><div class="h">Actioned</div><div class="nums" id="sActioned"></div></div>
+        </div>
+        <div class="last">Last outreach: 10/1/2025 · Connected · Rodriguez, Lorrie</div>
+      </div>
+
+      <h3>Bulk Actions</h3>
+      <p class="muted" style="margin:0 0 12px">Use the below buttons to apply the same outcome to all record requests within the group.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap" id="bulk">
+        <button class="btn outline prom" data-bulk="Scheduled">Schedule All</button>
+        <button class="btn outline prom" data-bulk="In Research">Send All to Research</button>
+        <button class="btn outline prom" data-bulk="Rerouted">Reroute All</button>
+        <button class="btn outline prom" data-bulk="Pended">Pend All</button>
+      </div>
+
+      <hr style="margin:24px 0 20px" />
+      <h3>Individual Outcomes</h3>
+      <p class="muted" style="margin:0 0 16px">Select one to many record requests within the table to apply outcomes. Once an outcome has been applied, you may click the undo icon to remove the outcome, with the exception of scheduling.</p>
+
+      <div class="filters">
+        <input class="search" id="search" placeholder="Search by Member Name, Practitioner, Site, or Request ID..." />
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="selbar" id="selbar">
+        <div class="grp">☑ <span id="selCount">0</span> Requests Selected <span class="link" id="selCancel">Cancel</span></div>
+        <div class="grp">Action
+          <select id="selAction"><option value="">Select</option><option value="Scheduled">Schedule</option><option value="In Research">Send to Research</option><option value="Pended">Pend</option><option value="Rerouted">Reroute</option></select>
+          <button class="btn solid xs" id="selApply" disabled>Apply</button>
+        </div>
+      </div>
+
+      <div class="tablewrap"><table>
+        <thead><tr><th><input type="checkbox" id="checkAll" /></th><th>Request ID</th><th>Health Plan</th><th>Member Name</th><th>Member DOB</th><th>SDOS</th><th>Project Due Date</th><th>Commitment Date</th><th>Status</th><th>Payment Status</th><th>Practitioner</th><th>SLOC</th><th>Site</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table></div>
+      <div class="pager">
+        <div class="grp">Items per page: <select><option>25</option><option>50</option></select> <span id="range"></span></div>
+        <div class="grp">Page: <select><option>1</option></select> of 50 <button>«</button><button>‹</button><button>›</button><button>»</button></div>
+      </div>
+    </div>
+
+    <div id="tab-history" style="display:none">
+      <h3 style="margin-bottom:4px">Call History</h3>
+      <p class="muted" style="margin:0 0 16px">The below data represents all retrieval activity for this phone number.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Call Outcome</th><th>Agent</th><th>Requests</th><th>Agent Actions</th><th>Site Details Updated</th><th>PPT</th><th>Time Stamp</th></tr></thead>
+        <tbody>
+          <tr><td>Connected</td><td>Rodriguez, Lorrie</td><td>50</td><td>Scheduled: 30<br>Pended: 20 (PEND24 | PEND5)</td><td>Address</td><td>—</td><td style="white-space:nowrap">10/1/2025, 8:30 AM EST</td></tr>
+          <tr><td>Not Connected<br>Not a Practitioner Office</td><td>May, Shelby</td><td>30</td><td>In Research: 30</td><td>—</td><td>—</td><td style="white-space:nowrap">10/1/2025, 8:30 AM EST</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <!-- Agent Notes panel (existing, abbreviated) -->
+  <div class="panel right" id="panel-agent" data-name="agent">
+    <div class="head">
+      <div class="row"><span class="t">Agent Notes</span>
+        <span><span class="iconbtn" data-move title="Move to left">⇄</span><span class="iconbtn" data-close>✕</span></span></div>
+      <div class="sub">Leave site-relevant details that are only visible internally.</div>
+    </div>
+    <div class="compose">
+      <textarea rows="2" placeholder="Add a note for the next agent..."></textarea>
+      <div class="actions"><button class="btn solid" style="padding:4px 12px;font-size:12px">Save note</button></div>
+    </div>
+    <div class="list">
+      <div class="note"><div class="meta"><b>Jordan Schaefer</b> | Mar 16, 2026</div><div class="text">Site is difficult to reach — receptionist screens all calls. Best to call after 2pm and ask for Carla in medical records.</div></div>
+      <div class="note"><div class="meta"><b>Maria Torres</b> | Mar 13, 2026</div><div class="text">They requested we send a fax cover sheet first before pulling charts. Fax to 718-555-5678, Attn: Records Dept.</div></div>
+    </div>
+  </div>
+
+  <!-- Client Notes panel (new) -->
+  <div class="panel right" id="panel-client" data-name="client">
+    <div class="head">
+      <div class="row"><span class="t">Client Notes</span>
+        <span><span class="iconbtn" data-move title="Move to left">⇄</span><span class="iconbtn" data-close>✕</span></span></div>
+      <div class="sub">Notes provided by the client about this site. Read-only. The contact in the tool and your SOP may take precedence.</div>
+    </div>
+    <div class="list">
+      <div class="note">
+        <div class="meta"><b>Mar 20, 2026</b> | 9:05 AM ET</div>
+        <div class="text">Please outreach to the provider office today between <span class="hl">1-3:00 central time</span>.</div>
+      </div>
+      <div class="note">
+        <div class="meta"><b>Mar 19, 2026</b> | 1:30 PM ET</div>
+        <div class="text">DV is not at the correct location. Please move to NC and use <span class="hl">456 Oak Ave., Suite 200, Raleigh, NC 27601</span> - (P)<span class="hl">919-555-0142</span></div>
+      </div>
+      <div class="note">
+        <div class="meta"><b>Mar 18, 2026</b> | 10:42 AM ET</div>
+        <div class="text">per Claims data, services for provider <span class="hl">Dr. Susan Barnes</span> were rendered @ <span class="hl">123 Main St., #330, New York, NY 12345</span> / Ph: <span class="hl">718-555-1234</span>; location is a Datavant Embedded Site (Site ID: <span class="hl">48213</span>)</div>
+      </div>
+      <div class="note">
+        <div class="meta"><b>Mar 12, 2026</b> | 3:15 PM ET</div>
+        <div class="text">Please have this org merged into the primary Org <span class="hl">[ID 90317]</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const panels = { agent: document.getElementById('panel-agent'), client: document.getElementById('panel-client') };
+  const cards = document.querySelectorAll('.notecard');
+  let side = 'right';
+
+  function closeAll() {
+    Object.values(panels).forEach(p => p.classList.remove('open'));
+    cards.forEach(c => c.classList.remove('active'));
+  }
+  function open(name) {
+    closeAll();
+    const p = panels[name];
+    p.classList.remove('left', 'right'); p.classList.add(side, 'open');
+    document.querySelector(`.notecard[data-panel="${name}"]`).classList.add('active');
+  }
+  cards.forEach(c => c.addEventListener('click', () => {
+    const name = c.dataset.panel;
+    panels[name].classList.contains('open') ? closeAll() : open(name);
+  }));
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+  document.querySelectorAll('[data-move]').forEach(b => b.addEventListener('click', () => {
+    side = side === 'right' ? 'left' : 'right';
+    const name = b.closest('.panel').dataset.name;
+    open(name);
+  }));
+
+  // ---------- Call Actions workspace ----------
+  const $ = id => document.getElementById(id);
+  const toast = m => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2200); };
+
+  // Office contact result
+  const showContact = v => {
+    $('contactInitial').style.display = v === null ? 'flex' : 'none';
+    $('contactConn').style.display = v === 'c' ? 'flex' : 'none';
+    $('contactNo').style.display = v === 'n' ? 'flex' : 'none';
+    $('reasonBlock').style.display = v === 'n' ? 'flex' : 'none';
+  };
+  $('btnConn').onclick = () => showContact('c');
+  $('btnNoConn').onclick = () => showContact('n');
+  document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { showContact(null); $('reason').value = ''; $('reasonSubmit').disabled = true; });
+  $('reason').onchange = e => $('reasonSubmit').disabled = !e.target.value;
+  $('reasonSubmit').onclick = () => toast('Reason submitted: ' + $('reason').value);
+
+  // Tabs
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+    $('tab-workspace').style.display = b.dataset.tab === 'workspace' ? '' : 'none';
+    $('tab-history').style.display = b.dataset.tab === 'history' ? '' : 'none';
+  });
+
+  // Data
+  const plans = ['Aetna Commercial', 'Humana Medicare', 'UnitedHealthcare'];
+  const names = ['Doe, Jane', 'Doe, John', 'Sample, Alex', 'Testerson, Tina', 'Fakename, Fred', 'Placeholder, Pat', 'Mockman, Molly', 'Example, Eddie', 'Dummy, Dana', 'Lorem, Ipsum', 'Notreal, Nora', 'Demo, Dexter'];
+  const dobs = ['01/01/1900','01/01/1970','02/02/1980','03/03/1990','04/04/1950','05/05/1960','06/15/1975','07/04/1985','08/08/1988','09/09/1999','10/10/1965','12/31/1999'];
+  const docs = ['BARNES, TAYLOR', 'CHEN, SARAH', 'PATEL, RAJ', 'WILLIAMS, JAMES'];
+  const due = ['3/1/2026', '4/1/2026', '5/1/2026'];
+  const rows = Array.from({ length: 12 }, (_, i) => ({
+    id: 'RR-' + (1820987 + i), plan: plans[i % 3], member: names[i],
+    dob: dobs[i], sdos: `0${i % 9 + 1}/01/2026–0${i % 9 + 1}/28/2026`,
+    due: due[i % 3], commit: '—', status: 'New', payment: '—', doc: docs[i % 4],
+    sloc: '123 Main St., #330,\nNew York, NY 12345', site: 'Manhattan Internal Medicine'
+  }));
+  const selected = new Set();
+  const filters = { 'Project Due Date': new Set(), 'Status': new Set(), 'Practitioner': new Set() };
+  const options = { 'Project Due Date': due, 'Status': ['New', 'Scheduled', 'In Research', 'Rerouted', 'Pended'], 'Practitioner': docs };
+  let q = '';
+
+  // Filter chips
+  const chips = $('chips');
+  Object.keys(filters).forEach(name => {
+    const c = document.createElement('div'); c.className = 'chip';
+    c.innerHTML = `<span></span><div class="menu">${options[name].map(o => `<label><input type="checkbox" value="${o}"> ${o}</label>`).join('')}</div>`;
+    const label = c.querySelector('span');
+    const paint = () => { const n = filters[name].size; label.textContent = name + (n ? ` (${n})` : '') + ' ▾'; c.classList.toggle('sel', n > 0); };
+    paint();
+    label.onclick = () => { document.querySelectorAll('.chip.open').forEach(x => x !== c && x.classList.remove('open')); c.classList.toggle('open'); };
+    c.querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? filters[name].add(i.value) : filters[name].delete(i.value); paint(); render(); });
+    chips.appendChild(c);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.chip')) document.querySelectorAll('.chip.open').forEach(x => x.classList.remove('open')); });
+  $('search').oninput = e => { q = e.target.value.toLowerCase(); render(); };
+
+  const visible = () => rows.filter(r =>
+    (!q || [r.member, r.doc, r.site, r.id].some(v => v.toLowerCase().includes(q))) &&
+    (!filters['Project Due Date'].size || filters['Project Due Date'].has(r.due)) &&
+    (!filters['Status'].size || filters['Status'].has(r.status)) &&
+    (!filters['Practitioner'].size || filters['Practitioner'].has(r.doc)));
+
+  function render() {
+    const vis = visible();
+    $('tbody').innerHTML = vis.map(r => {
+      const done = r.status !== 'New';
+      return `<tr>
+        <td>${done ? `<span class="undo" data-undo="${r.id}" title="Undo">↺</span>` : `<input type="checkbox" data-sel="${r.id}" ${selected.has(r.id) ? 'checked' : ''}>`}</td>
+        <td>${r.id}</td><td>${r.plan}</td><td>${r.member}</td><td>${r.dob}</td><td>${r.sdos}</td><td>${r.due}</td><td>${r.commit}</td>
+        <td class="st ${done ? 'done' : ''}">${r.status}</td><td>${r.payment}</td><td>${r.doc}</td>
+        <td style="white-space:pre-line">${r.sloc}</td><td>${r.site}</td></tr>`;
+    }).join('') || '<tr><td colspan="13" class="muted" style="text-align:center;padding:24px">No record requests match.</td></tr>';
+    $('range').textContent = `1–${vis.length} of 1,247 items`;
+    const sel = [...selected];
+    $('selCount').textContent = sel.length + '/1,247';
+    $('selbar').classList.toggle('show', sel.length > 0);
+    $('selApply').disabled = !$('selAction').value;
+    $('checkAll').checked = vis.length > 0 && vis.filter(r => r.status === 'New').every(r => selected.has(r.id)) && selected.size > 0;
+    // summary
+    const cnt = k => rows.filter(r => r.status === k).length;
+    $('sNew').textContent = (1247 - rows.filter(r => r.status !== 'New').length).toLocaleString();
+    $('sActioned').innerHTML = ['Scheduled', 'In Research', 'Rerouted', 'Pended'].map(k => `<div><div class="l">${k}</div><div class="v">${cnt(k)}</div></div>`).join('');
+    document.querySelectorAll('[data-bulk]').forEach(b => b.disabled = false);
+    document.querySelectorAll('[data-sel]').forEach(cb => cb.onchange = () => { cb.checked ? selected.add(cb.dataset.sel) : selected.delete(cb.dataset.sel); render(); });
+    document.querySelectorAll('[data-undo]').forEach(u => u.onclick = () => { const r = rows.find(x => x.id === u.dataset.undo); Object.assign(r, { status: 'New', commit: '—', payment: '—' }); render(); });
+  }
+  function apply(ids, status) {
+    rows.filter(r => ids.includes(r.id) && r.status === 'New').forEach(r => {
+      r.status = status;
+      if (status === 'Scheduled') { r.commit = '3/1/2026'; r.payment = 'Pending'; }
+    });
+    selected.clear(); $('selAction').value = ''; render();
+    toast(`${ids.length} request${ids.length === 1 ? '' : 's'} → ${status}`);
+  }
+  $('selAction').onchange = () => render();
+  $('selApply').onclick = () => apply([...selected], $('selAction').value);
+  $('selCancel').onclick = () => { selected.clear(); $('selAction').value = ''; render(); };
+  $('checkAll').onchange = e => { visible().filter(r => r.status === 'New').forEach(r => e.target.checked ? selected.add(r.id) : selected.delete(r.id)); render(); };
+  document.querySelectorAll('[data-bulk]').forEach(b => b.onclick = () => apply(rows.map(r => r.id), b.dataset.bulk));
+  render();
+</script>
+</body>
+</html>
